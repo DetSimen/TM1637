@@ -100,6 +100,12 @@ Display.PrintDeg(-15);  выведет -15*
 
 Display.ToggleColon();
 
+Точку/двоеточие можно включить/выключить вручную, функцией ShowPoint() с параметром true/false.
+
+Display.ShowPoint(true);  включить точку
+Display.ShowPoint(false);  выключить точку
+
+
 
 Яркость свечения устанавливается функцией 
 
