@@ -196,11 +196,11 @@ void TM1637::Print(const int ANumber, const uint8_t ARadix) {
 }
 
 
-void TM1637::Print(const double AValue) {
+void TM1637::Print(const double AValue, const uint8_t APrecision = 1) {
 	if (FDisplayType != enTM1637Type::Number) return;
 	char *buf = alloca(12);
 
-	dtostrf(AValue, NUM_DIGITS, 2, buf);
+	dtostrf(AValue, NUM_DIGITS, APrecision, buf);
 
 	int8_t point_idx = -1; 
 
@@ -212,10 +212,18 @@ void TM1637::Print(const double AValue) {
 		break;
 	}
 
+	if (point_idx > 0) {
+		for (uint8_t i = point_idx; i < strlen(buf); i++) {
+			buf[i] = buf[i + 1];
+		}
+	}
+
 	FPointIndex = (point_idx > 0) ? point_idx - 1 : 7;
 	FPointVisible = (FPointIndex < NUM_DIGITS);
 
 	OutString(buf, enTM1637Align::Right);
+
+
 
 	Update();
 }
