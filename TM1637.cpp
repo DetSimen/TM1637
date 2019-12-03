@@ -1,4 +1,4 @@
-#include "TM1637.h"
+п»ї#include "TM1637.h"
 #include <Arduino.h>
 #include <alloca.h>
 #include <avr\pgmspace.h>
@@ -34,7 +34,7 @@ static const tagSegmentData SegmentsData[]  PROGMEM {
 	{ 'F',0x71 },
 	{ ' ',0x00 },
 	{ '-',0x40 }, 
-	{ '*',0x63 },  // значок градуса, т.е пишем -25* выведется -25 и значок градуса
+	{ '*',0x63 },  // Р·РЅР°С‡РѕРє РіСЂР°РґСѓСЃР°, С‚.Рµ РїРёС€РµРј -25* РІС‹РІРµРґРµС‚СЃСЏ -25 Рё Р·РЅР°С‡РѕРє РіСЂР°РґСѓСЃР°
 	{ '_',0x08 },
 	{ 'r',0x50 },
 	{ 'H',0x76 },
@@ -65,7 +65,7 @@ static const uint8_t SEG_DATA_LENGHT = sizeof(SegmentsData) / sizeof(tagSegmentD
 */
 
 
-void TM1637::Start(void)    // выдает старт условие на шину
+void TM1637::Start(void)    // РІС‹РґР°РµС‚ СЃС‚Р°СЂС‚ СѓСЃР»РѕРІРёРµ РЅР° С€РёРЅСѓ
 {
 	digitalWrite(FClockPin, HIGH);
 	digitalWrite(FDataPin, HIGH);
@@ -74,7 +74,7 @@ void TM1637::Start(void)    // выдает старт условие на шину
 }
 
 
-void TM1637::Stop(void) // выдает стоп условие на шину
+void TM1637::Stop(void) // РІС‹РґР°РµС‚ СЃС‚РѕРї СѓСЃР»РѕРІРёРµ РЅР° С€РёРЅСѓ
 {
 	digitalWrite(FClockPin, LOW);
 	digitalWrite(FDataPin, LOW);
@@ -89,7 +89,7 @@ void TM1637::WriteByte(int8_t wr_data) {
 	for (uint8_t i = 0; i < 8; i++, wr_data >>= 1)
 	{
 		digitalWrite(FClockPin, LOW);
-		digitalWrite(FDataPin, wr_data & 0x01);// млатшым битом вперёд
+		digitalWrite(FDataPin, wr_data & 0x01);// РјР»Р°С‚С€С‹Рј Р±РёС‚РѕРј РІРїРµСЂС‘Рґ
 		delayMicroseconds(3);
 
 		digitalWrite(FClockPin, HIGH);
@@ -104,20 +104,20 @@ void TM1637::WriteByte(int8_t wr_data) {
 
 void TM1637::Update(void) {
 	Start();
-	WriteByte(CMD_SET_DATA); // будем передавать данныя, NUM_DIGITS байт + управляющий байт, там где яркость
+	WriteByte(CMD_SET_DATA); // Р±СѓРґРµРј РїРµСЂРµРґР°РІР°С‚СЊ РґР°РЅРЅС‹СЏ, NUM_DIGITS Р±Р°Р№С‚ + СѓРїСЂР°РІР»СЏСЋС‰РёР№ Р±Р°Р№С‚, С‚Р°Рј РіРґРµ СЏСЂРєРѕСЃС‚СЊ
 	Stop();
 
 	Start();
 	WriteByte(CMD_SET_ADDR);
 	for (uint8_t i = 0; i < NUM_DIGITS; i++) {
 		uint8_t bytesend = FOutData[i];
-		if (FPointVisible && (i == FPointIndex)) bytesend |= 0x80; // вывод точки в нужном месте
-		WriteByte(bytesend);		// пишем байты из буфера
+		if (FPointVisible && (i == FPointIndex)) bytesend |= 0x80; // РІС‹РІРѕРґ С‚РѕС‡РєРё РІ РЅСѓР¶РЅРѕРј РјРµСЃС‚Рµ
+		WriteByte(bytesend);		// РїРёС€РµРј Р±Р°Р№С‚С‹ РёР· Р±СѓС„РµСЂР°
 	}
 	Stop();
 
 	Start();
-	WriteByte(MAGIC_NUM + FBrightness);  // пишем яркость
+	WriteByte(MAGIC_NUM + FBrightness);  // РїРёС€РµРј СЏСЂРєРѕСЃС‚СЊ
 	Stop();
 }
 
@@ -126,13 +126,13 @@ void TM1637::OutString(const char * AString, const enTM1637Align AAlign) {
 
 	Clear();
 	char ch;
-	if (AAlign == enTM1637Align::Left) {  // если выравнивание влево, печатаем с 0 индекса
+	if (AAlign == enTM1637Align::Left) {  // РµСЃР»Рё РІС‹СЂР°РІРЅРёРІР°РЅРёРµ РІР»РµРІРѕ, РїРµС‡Р°С‚Р°РµРј СЃ 0 РёРЅРґРµРєСЃР°
 		uint8_t idx = 0;
 		while ((ch = *AString++) && (idx < NUM_DIGITS)) {
 			FOutData[idx++] = GetSegments(ch);
 		}
 	}
-	else {  // а если вправо - с конца. 
+	else {  // Р° РµСЃР»Рё РІРїСЂР°РІРѕ - СЃ РєРѕРЅС†Р°. 
 		uint8_t pos = NUM_DIGITS;
 		uint8_t len = strlen(AString);
 		if (len > NUM_DIGITS) len = NUM_DIGITS;
@@ -204,7 +204,7 @@ void TM1637::Print(const double AValue) {
 
 	int8_t point_idx = -1; 
 
-	for (uint8_t i = 0; i < NUM_DIGITS; i++) {  // поиск позиции точки в строке 
+	for (uint8_t i = 0; i < NUM_DIGITS; i++) {  // РїРѕРёСЃРє РїРѕР·РёС†РёРё С‚РѕС‡РєРё РІ СЃС‚СЂРѕРєРµ 
 		char ch = buf[i];
 		if (ch == 0x00) break;
 		if (ch != '.') continue;
@@ -236,14 +236,14 @@ void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes) {
 }
 
 
-void TM1637::PrintDeg(const int8_t ADegrees) { // от -128 до +127
+void TM1637::PrintDeg(const int8_t ADegrees) { // РѕС‚ -128 РґРѕ +127
 
 		char *buf = alloca(10);
 
 		itoa(ADegrees, buf, 10);
 		uint8_t len = strlen(buf);
-		buf[len] = '*';			// безопасно. даже если передать отрицательную температуру
-		buf[len + 1] = 0x00;	// меньше 100 гра, знак просто не выведеца и сё. 
+		buf[len] = '*';			// Р±РµР·РѕРїР°СЃРЅРѕ. РґР°Р¶Рµ РµСЃР»Рё РїРµСЂРµРґР°С‚СЊ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅСѓСЋ С‚РµРјРїРµСЂР°С‚СѓСЂСѓ
+		buf[len + 1] = 0x00;	// РјРµРЅСЊС€Рµ 100 РіСЂР°, Р·РЅР°Рє РїСЂРѕСЃС‚Рѕ РЅРµ РІС‹РІРµРґРµС†Р° Рё СЃС‘. 
 
 		OutString(buf, enTM1637Align::Right);
 }
