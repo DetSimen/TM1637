@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <alloca.h>
 #include <avr\pgmspace.h>
+#include <Generics.h>
 
 #pragma pack(push,1)
 
@@ -38,10 +39,12 @@ static const tagSegmentData SegmentsData[]  PROGMEM {
 	{ '_',0x08 },
 	{ 'r',0x50 },
 	{ 'H',0x76 },
+	{ 'I',0x06 },
 	{ 'h',0x74 },
 	{ 'L',0x38 },
 	{ 'n',0x54 },
 	{ 'o',0x5C },
+	{ 'O',0x3F },
 	{ 'P',0x73 },
 	{ 'S',0x6D },
 	{ 'U',0x3E },
@@ -125,22 +128,24 @@ void TM1637::Update(void) {
 void TM1637::OutString(const char * AString, const enTM1637Align AAlign) {
 
 	Clear();
-	char ch;
-	if (AAlign == enTM1637Align::Left) {  // если выравнивание влево, печатаем с 0 индекса
-		uint8_t idx = 0;
-		while ((ch = *AString++) && (idx < NUM_DIGITS)) {
-			FOutData[idx++] = GetSegments(ch);
-		}
-	}
-	else {  // а если вправо - с конца. 
-		uint8_t pos = NUM_DIGITS;
-		uint8_t len = strlen(AString);
-		if (len > NUM_DIGITS) len = NUM_DIGITS;
 
-		while (pos > 0) {
-			FOutData[--pos] = (len > 0) ? GetSegments(AString[--len]) : 0x00;
+	if (AAlign == enTM1637Align::Left) {
+
+		for (uint8_t i = 0; i < NUM_DIGITS; i++) {
+			char ch = AString[i];
+			if (ch == 0x00) break;
+			FOutData[i] = GetSegments(ch);
 		}
 	}
+	else {
+		int8_t len = strlen(AString);
+		if (len > NUM_DIGITS) len = NUM_DIGITS;
+		for (int8_t i = NUM_DIGITS; (i >= 0) && (len > 0); ) {
+			FOutData[--i] = GetSegments(AString[--len]);
+		}
+
+	}
+
 
 	Update();
 }
@@ -152,11 +157,11 @@ uint8_t TM1637::GetSegments(const uint8_t ASymbol) {
 
 	for (uint8_t i = 0; i < SEG_DATA_LENGHT; src++, i++) {
 
-       if (pgm_read_byte(&src->Symbol) == ASymbol) return pgm_read_byte(&src->Mask);
+	   if (pgm_read_byte(&src->Symbol) == ASymbol) return pgm_read_byte(&src->Mask);
 
 	}
 
-	return 0x00;
+	return 0;
 }
 
 
@@ -178,54 +183,51 @@ TM1637::TM1637(uint8_t AClockPin, uint8_t ADataPin, enTM1637Type ADisplayType) {
 }
 
 
-void TM1637::Print(const char * AString) {
+void TM1637::Print(const char *AString, const enTM1637Align AAlign) {
 
-	OutString(AString, enTM1637Align::Left);
+	OutString(AString, AAlign);
 
 }
 
 
 void TM1637::Print(const int ANumber, const uint8_t ARadix) {
-	char *buf = alloca(16);
+	char *buf = (char *)(alloca(16));
 
 	itoa(ANumber, buf, ARadix);
-
+	
 	OutString(buf, enTM1637Align::Right);
 
-	Update();
 }
 
 
-void TM1637::Print(const double AValue, const uint8_t APrecision = 1) {
+void TM1637::Print(const double AValue, const uint8_t APrecision) {
 	if (FDisplayType != enTM1637Type::Number) return;
-	char *buf = alloca(12);
+	char *buf = (char *)(alloca(12));
 
-	dtostrf(AValue, NUM_DIGITS, APrecision, buf);
+	dtostrf(AValue, NUM_DIGITS+1, APrecision, buf);
 
-	int8_t point_idx = -1; 
+	uint8_t len = strlen(buf);
+	char *out = (char *)(alloca(len + 1));
 
-	for (uint8_t i = 0; i < NUM_DIGITS; i++) {  // поиск позиции точки в строке 
+	uint8_t pt_idx = 255;
+	
+	uint8_t n = 0;
+	for (uint8_t i = 0; i < len; i++) {
 		char ch = buf[i];
-		if (ch == 0x00) break;
-		if (ch != '.') continue;
-		point_idx = i;
-		break;
+		if (ch != '.')
+			out[n++] = ch;
+		else
+			pt_idx = i - 1;
 	}
 
-	if (point_idx > 0) {
-		for (uint8_t i = point_idx; i < strlen(buf); i++) {
-			buf[i] = buf[i + 1];
-		}
+	OutString(out, enTM1637Align::Right);
+
+	FPointVisible = pt_idx < NUM_DIGITS;
+
+	if (FPointVisible) {
+		FPointIndex = pt_idx;
+		Update();
 	}
-
-	FPointIndex = (point_idx > 0) ? point_idx - 1 : 7;
-	FPointVisible = (FPointIndex < NUM_DIGITS);
-
-	OutString(buf, enTM1637Align::Right);
-
-
-
-	Update();
 }
 
 
@@ -246,7 +248,7 @@ void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes) {
 
 void TM1637::PrintDeg(const int8_t ADegrees) { // от -128 до +127
 
-		char *buf = alloca(10);
+		char *buf = (char *)(alloca(10));
 
 		itoa(ADegrees, buf, 10);
 		uint8_t len = strlen(buf);
@@ -277,11 +279,10 @@ void TM1637::ShowPoint(const bool APointVisible) {
 
 
 void TM1637::ToggleColon(void) {
-	if (FDisplayType == enTM1637Type::Time) {
-		FPointIndex = 1;
-		ShowPoint(not FPointVisible);
 
-	}
+	if (FDisplayType == enTM1637Type::Time) FPointIndex = 1;
+
+	ShowPoint(not FPointVisible);
 }
 
 

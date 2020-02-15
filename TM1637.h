@@ -69,8 +69,9 @@ public:
 
 
 // печатает первые NUM_DIGITS символов переданной строки
+// с выравниванием. По умолчанию, выравнивание - влево
 //
-	void Print(const char *AString);
+	void Print(const char *AString, const enTM1637Align AAlign = enTM1637Align::Left);
 
 // печатает двухбайтовое целое число со знаком
 // по основанию ARadix (по умолчанию 10)
@@ -79,11 +80,12 @@ public:
 //
 	void Print(const int ANumber, const uint8_t ARadix = 10);
 
-// печать дробных чисел со знаком. 
+// печать дробных чисел со знаком.
+// c точностью APrecision знаков после запятой, по умолчанию - 2 
 // Если число длинное - печатаются первые NUM_DIGITS символов
 // Если индекс точки находится в пределах 0 - NUM_DIGITS то она тоже печатается
 //
-	void Print(const double AValue, const uint8_t APrecision = 1);
+	void Print(const double AValue, const uint8_t APrecision = 2);
 
 // для удобства печати времени, передаёшь часы/минуты, печатает 
 // на своих местах, слева и справа от двоеточия
