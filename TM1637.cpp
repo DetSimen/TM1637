@@ -4,10 +4,6 @@
 #include <avr\pgmspace.h>
 
 
-#include <Generics.h>
-#include <Consts.h>
-
-
 #pragma pack(push,1)
 
 struct T1637SegmentData {
