@@ -4,9 +4,13 @@
 #include <avr\pgmspace.h>
 
 
+#include <Generics.h>
+#include <Consts.h>
+
+
 #pragma pack(push,1)
 
-struct tagSegmentData {
+struct T1637SegmentData {
 
 public:
 	char	Symbol;
@@ -16,10 +20,10 @@ public:
 #pragma pack(pop)
 
 
-static const tagSegmentData SegmentsData[]  PROGMEM {
-	{ '0',0x3F},
-	{ '1',0x06},
-	{ '2',0x5B},
+static const T1637SegmentData SegmentsData[]  PROGMEM {
+	{ '0',0x3F },
+	{ '1',0x06 },
+	{ '2',0x5B },
 	{ '3',0x4F },
 	{ '4',0x66 },
 	{ '5',0x6D },
@@ -44,6 +48,7 @@ static const tagSegmentData SegmentsData[]  PROGMEM {
 	{ 'L',0x38 },
 	{ 'n',0x54 },
 	{ 'o',0x5C },
+	{ 't',0x78 },
 	{ 'O',0x3F },
 	{ 'P',0x73 },
 	{ 'S',0x6D },
@@ -53,7 +58,7 @@ static const tagSegmentData SegmentsData[]  PROGMEM {
 
 };
 
-static const uint8_t SEG_DATA_LENGHT = sizeof(SegmentsData) / sizeof(tagSegmentData);
+static const uint8_t SEG_DATA_LENGHT = sizeof(SegmentsData) / sizeof(T1637SegmentData);
 
 /*
 --0x01--
@@ -153,7 +158,7 @@ void TM1637::OutString(const char * AString, const enTM1637Align AAlign) {
 
 uint8_t TM1637::GetSegments(const uint8_t ASymbol) {
 
-	const tagSegmentData *src = &SegmentsData[0];
+	const T1637SegmentData *src = &SegmentsData[0];
 
 	for (uint8_t i = 0; i < SEG_DATA_LENGHT; src++, i++) {
 
@@ -255,6 +260,7 @@ void TM1637::PrintDeg(const int8_t ADegrees) { // от -128 до +127
 		buf[len] = '*';			// безопасно. даже если передать отрицательную температуру
 		buf[len + 1] = 0x00;	// меньше 100 гра, знак просто не выведеца и сё. 
 
+		FPointVisible = false;
 		OutString(buf, enTM1637Align::Right);
 }
 
