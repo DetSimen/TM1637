@@ -1,5 +1,5 @@
-﻿#include "TM1637.h"
-#include <Arduino.h>
+﻿#include <Arduino.h>
+#include "TM1637.h"
 #include <alloca.h>
 #include <avr\pgmspace.h>
 
@@ -69,7 +69,7 @@ static const uint8_t SEG_DATA_LENGHT = sizeof(SegmentsData) / sizeof(T1637Segmen
 */
 
 
-void TM1637::Start(void)    // выдает старт условие на шину
+void TM1637::Start(void) const    // выдает старт условие на шину
 {
 	digitalWrite(FClockPin, HIGH);
 	digitalWrite(FDataPin, HIGH);
@@ -78,7 +78,7 @@ void TM1637::Start(void)    // выдает старт условие на ши�
 }
 
 
-void TM1637::Stop(void) // выдает стоп условие на шину
+void TM1637::Stop(void) const // выдает стоп условие на шину
 {
 	digitalWrite(FClockPin, LOW);
 	digitalWrite(FDataPin, LOW);
@@ -87,7 +87,7 @@ void TM1637::Stop(void) // выдает стоп условие на шину
 }
 
 
-void TM1637::WriteByte(int8_t wr_data) {
+void TM1637::WriteByte(int8_t wr_data) const {
 
 
 	for (uint8_t i = 0; i < 8; i++, wr_data >>= 1)
@@ -106,7 +106,7 @@ void TM1637::WriteByte(int8_t wr_data) {
 }
 
 
-void TM1637::Update(void) {
+void TM1637::Update(void) const {
 	Start();
 	WriteByte(CMD_SET_DATA); // будем передавать данныя, NUM_DIGITS байт + управляющий байт, там где яркость
 	Stop();
@@ -152,7 +152,7 @@ void TM1637::OutString(const char * AString, const enTM1637Align AAlign) {
 }
 
 
-uint8_t TM1637::GetSegments(const uint8_t ASymbol) {
+uint8_t TM1637::GetSegments(const uint8_t ASymbol) const {
 
 	const T1637SegmentData *src = &SegmentsData[0];
 
@@ -233,7 +233,6 @@ void TM1637::Print(const double AValue, const uint8_t APrecision) {
 
 
 void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes) {
-	if (AHours > 23 || AMinutes > 59) return;
 
 	Clear();
 

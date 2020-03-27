@@ -1,5 +1,5 @@
 ﻿// copyleft DtS (DetSimen)  at December 2019
-// кто хочет - может налить какнить. 
+// кто хочет - может налить какнить, при случае. 
 
 #pragma once
 
@@ -13,12 +13,14 @@ const uint8_t NUM_DIGITS = 4;
 enum class enTM1637Type : bool { Number = false, Time = true };	// перечисление: тип дисплея числа/время
 enum class enTM1637Align: bool {Left = false, Right = true};	// перечисление: выравнивание влево/вправа
 
+#pragma pack(push,1)
+
 class TM1637
 {
 private:
-	static const uint8_t CMD_SET_DATA = 0x40;
-	static const uint8_t CMD_SET_ADDR = 0xC0;
-	static const uint8_t MAGIC_NUM = 0x88;
+	static const uint8_t CMD_SET_DATA	= 0x40;  // следом папруть данные
+	static const uint8_t CMD_SET_ADDR	= 0xC0;	 // следом пойдёт адрес
+	static const uint8_t MAGIC_NUM		= 0x88;	 // х.з для чего
 
 protected:
 	uint8_t FClockPin;  // пин для тактов
@@ -33,17 +35,17 @@ protected:
 	uint8_t		FOutData[NUM_DIGITS]; // буфер выводимых данных (уже перекодированный под сегменты)
 
 
-	void Start(void);    // выдает старт условие на шину
+	void Start(void) const;   // выдает старт условие на шину
 
-	void Stop(void);     // выдает стоп условие на шину
+	void Stop(void) const;    // выдает стоп условие на шину
 
 // выводит в шину 1 байт данных млатшым битом впердё
 //
-	void WriteByte(int8_t wr_data);
+	void WriteByte(int8_t wr_data) const;
 
 // вывод последовательно всего буфера + установка яркости
 //
-	void Update(void);
+	void Update(void) const;
 
 
 // вывод строки с выравниванием влево/вправо
@@ -56,7 +58,7 @@ protected:
 // На входе принимает букву/цифру, и ищет в PROGMEM сегментную маску для него
 // возвращает маску символа, если такой есть, или 0х00, если символа в таблице нетю
 //
-	uint8_t GetSegments(const uint8_t ASymbol);
+	uint8_t GetSegments(const uint8_t ASymbol) const;
 
 public:
 // канструктор. Принимает 2 пина (обязательно) и тип дисплея (необязательно)
@@ -79,6 +81,8 @@ public:
 // печатается не более NUM_DIGITS начальных цыфр числа, включая знак
 //
 	void Print(const int ANumber, const uint8_t ARadix = 10);
+	void Print(const long ANumber) { Print(int(ANumber), 10); };
+
 
 // печать дробных чисел со знаком.
 // c точностью APrecision знаков после запятой, по умолчанию - 1 
@@ -131,3 +135,4 @@ public:
 }
 
 };
+#pragma pack(pop)
