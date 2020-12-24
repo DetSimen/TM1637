@@ -1,4 +1,5 @@
-﻿#include <Arduino.h>
+﻿#include "TM1637.h"
+#include <Arduino.h>
 #include "TM1637.h"
 #include <alloca.h>
 #include <avr\pgmspace.h>
@@ -54,7 +55,7 @@ static const T1637SegmentData SegmentsData[]  PROGMEM {
 
 };
 
-static const uint8_t SEG_DATA_LENGHT = sizeof(SegmentsData) / sizeof(T1637SegmentData);
+static const uint8_t SEG_DATA_SIZE = sizeof(SegmentsData) / sizeof(T1637SegmentData);
 
 /*
 --0x01--
@@ -94,15 +95,19 @@ void TM1637::WriteByte(int8_t wr_data) const {
 	{
 		digitalWrite(FClockPin, LOW);
 		digitalWrite(FDataPin, wr_data & 0x01);// млатшым битом вперёд
-		delayMicroseconds(3);
+		delayMicroseconds(8);
 
 		digitalWrite(FClockPin, HIGH);
-		delayMicroseconds(3);
+		delayMicroseconds(8);
 
 	}
 	digitalWrite(FClockPin, LOW);
+	delayMicroseconds(8);
 	digitalWrite(FDataPin, HIGH);
+	delayMicroseconds(8);
 	digitalWrite(FClockPin, HIGH);
+	delayMicroseconds(8);
+
 }
 
 
@@ -156,7 +161,7 @@ uint8_t TM1637::GetSegments(const uint8_t ASymbol) const {
 
 	const T1637SegmentData *src = &SegmentsData[0];
 
-	for (uint8_t i = 0; i < SEG_DATA_LENGHT; src++, i++) {
+	for (uint8_t i = 0; i < SEG_DATA_SIZE; src++, i++) {
 
 	   if (pgm_read_byte(&src->Symbol) == ASymbol) return pgm_read_byte(&src->Mask);
 
@@ -174,13 +179,18 @@ TM1637::TM1637(uint8_t AClockPin, uint8_t ADataPin, enTM1637Type ADisplayType) {
 	FPointIndex = (ADisplayType == enTM1637Type::Time) ? 1 : 7;
 	FPointVisible = true;
 
-	memset(FOutData, 0, NUM_DIGITS);
+	memset(FOutData, 0x00, NUM_DIGITS);
 
+	Init();
+	SetBrightness(0x07);
+}
+
+void TM1637::Init(void)
+{
 	pinMode(FClockPin, OUTPUT);
 	pinMode(FDataPin, OUTPUT);
 
 	Clear();
-	SetBrightness(0x07);
 }
 
 
@@ -232,7 +242,7 @@ void TM1637::Print(const double AValue, const uint8_t APrecision) {
 }
 
 
-void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes) {
+void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes, const bool AShowPoint) {
 
 	Clear();
 
@@ -240,7 +250,7 @@ void TM1637::PrintTime(const uint8_t AHours, const uint8_t AMinutes) {
 	FOutData[1] = GetSegments((AHours % 10) + '0');
 	FOutData[2] = GetSegments((AMinutes / 10) + '0');
 	FOutData[3] = GetSegments((AMinutes % 10) + '0');
-	FPointVisible = true;
+	FPointVisible = AShowPoint;
 	FPointIndex = 1;
 	Update();
 }
@@ -253,7 +263,7 @@ void TM1637::PrintDeg(const int8_t ADegrees) { // от -128 до +127
 		itoa(ADegrees, buf, 10);
 		uint8_t len = strlen(buf);
 		buf[len] = '*';			// безопасно. даже если передать отрицательную температуру
-		buf[len + 1] = 0x00;	// меньше 100 гра, знак просто не выведеца и сё. 
+		buf[len + 1] = 0x00;	// меньше 100 гра, знак градуса просто не выведеца и сё. 
 
 		FPointVisible = false;
 		OutString(buf, enTM1637Align::Right);

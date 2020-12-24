@@ -69,6 +69,10 @@ public:
 //
 	TM1637(uint8_t AClockPin, uint8_t ADataPin, enTM1637Type ADisplayType = enTM1637Type::Time);
 
+// по многочисленным просьбам трудящихся добавил
+// 
+	void Init(void);
+
 
 // печатает первые NUM_DIGITS символов переданной строки
 // с выравниванием. По умолчанию, выравнивание - влево
@@ -94,7 +98,7 @@ public:
 // для удобства печати времени, передаёшь часы/минуты, печатает c ведущими нулями 
 // и на своих местах, слева и справа от двоеточия
 //
-	void PrintTime(const uint8_t AHours, const uint8_t AMinutes);
+	void PrintTime(const uint8_t AHours, const uint8_t AMinutes, const bool AShowPoint = true);
 
 // для удобства. Передаешь число (со знаком) - печатает его и символ градуса за ним
 //
