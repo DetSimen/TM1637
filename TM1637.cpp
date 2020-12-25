@@ -1,8 +1,11 @@
 ﻿#include "TM1637.h"
+#include "TM1637.h"
+#include "TM1637.h"
 #include <Arduino.h>
 #include "TM1637.h"
 #include <alloca.h>
 #include <avr\pgmspace.h>
+#include <string.h>
 
 
 #pragma pack(push,1)
@@ -191,6 +194,27 @@ void TM1637::Init(void)
 	pinMode(FDataPin, OUTPUT);
 
 	Clear();
+}
+
+void TM1637::Sleep(void)
+{
+	if (FSavedData == NULL) FSavedData = new uint8_t[NUM_DIGITS];
+	if (FSavedData != NULL) memcpy(FSavedData, FOutData, NUM_DIGITS);
+	Clear();
+
+	pinMode(FClockPin, INPUT);
+	pinMode(FDataPin, INPUT);
+}
+
+void TM1637::Wakeup(void)
+{
+	Init();
+	if (FSavedData != NULL) {
+		memcpy(FOutData, FSavedData, NUM_DIGITS);
+		delete[] FSavedData;
+		FSavedData = NULL;
+		Update();
+	}
 }
 
 
