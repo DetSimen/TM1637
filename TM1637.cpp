@@ -1,11 +1,8 @@
-﻿#include "TM1637.h"
-#include "TM1637.h"
-#include "TM1637.h"
 #include <Arduino.h>
 #include "TM1637.h"
 #include <alloca.h>
 #include <avr\pgmspace.h>
-#include <string.h>
+//#include <string.h>
 
 
 #pragma pack(push,1)
