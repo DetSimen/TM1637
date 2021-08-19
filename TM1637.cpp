@@ -1,8 +1,7 @@
-#include <Arduino.h>
+﻿#include <Arduino.h>
 #include "TM1637.h"
 #include <alloca.h>
 #include <avr\pgmspace.h>
-//#include <string.h>
 
 
 #pragma pack(push,1)
@@ -15,6 +14,19 @@ public:
 };
 
 #pragma pack(pop)
+
+/*
+--0x01--
+|        |
+0x20     0x02
+|        |
+--0x40- -
+|        |
+0x10     0x04
+|        |
+--0x08--
+*/
+
 
 
 static const T1637SegmentData SegmentsData[]  PROGMEM {
@@ -57,18 +69,6 @@ static const T1637SegmentData SegmentsData[]  PROGMEM {
 
 static const uint8_t SEG_DATA_SIZE = sizeof(SegmentsData) / sizeof(T1637SegmentData);
 
-/*
---0x01--
-|        |
-0x20     0x02
-|        |
---0x40- -
-|        |
-0x10     0x04
-|        |
---0x08--
-*/
-
 
 void TM1637::Start(void) const    // выдает старт условие на шину
 {
@@ -101,13 +101,13 @@ void TM1637::WriteByte(int8_t wr_data) const {
 		delayMicroseconds(8);
 
 	}
+
 	digitalWrite(FClockPin, LOW);
 	delayMicroseconds(8);
 	digitalWrite(FDataPin, HIGH);
 	delayMicroseconds(8);
 	digitalWrite(FClockPin, HIGH);
 	delayMicroseconds(8);
-
 }
 
 
@@ -163,11 +163,11 @@ uint8_t TM1637::GetSegments(const uint8_t ASymbol) const {
 
 	for (uint8_t i = 0; i < SEG_DATA_SIZE; src++, i++) {
 
-	   if (pgm_read_byte(&src->Symbol) == ASymbol) return pgm_read_byte(&src->Mask);
-
+	   if (pgm_read_byte(&src->Symbol) == ASymbol) 
+		   return pgm_read_byte(&src->Mask);
 	}
 
-	return 0;
+	return 0; // не нашли такого символа, отдаем нулевую маску
 }
 
 
@@ -182,13 +182,14 @@ TM1637::TM1637(uint8_t AClockPin, uint8_t ADataPin, enTM1637Type ADisplayType) {
 	memset(FOutData, 0x00, NUM_DIGITS);
 
 	Init();
-	SetBrightness(0x07);
+	SetBrightness(0x03);
 }
 
 void TM1637::Init(void)
 {
 	pinMode(FClockPin, OUTPUT);
 	pinMode(FDataPin, OUTPUT);
+	Stop();
 
 	Clear();
 }
@@ -229,6 +230,15 @@ void TM1637::Print(const int ANumber, const uint8_t ARadix) {
 	
 	OutString(buf, enTM1637Align::Right);
 
+}
+
+void TM1637::Print(const unsigned ANumber, const uint8_t ARadix)
+{
+	char* buf = (char*)(alloca(16));
+
+	utoa(ANumber, buf, ARadix);
+
+	OutString(buf, enTM1637Align::Right);
 }
 
 
@@ -306,6 +316,13 @@ void TM1637::SetBrightness(const uint8_t AValue) {
 
 void TM1637::ShowPoint(const bool APointVisible) {
 	FPointVisible = APointVisible;
+	Update();
+}
+
+void TM1637::ShowPointPos(const uint8_t APointPos, const bool AVisible)
+{
+	FPointIndex = APointPos;
+	FPointVisible = AVisible;
 	Update();
 }
 

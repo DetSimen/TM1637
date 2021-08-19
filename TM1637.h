@@ -1,9 +1,4 @@
-﻿// copyleft DtS (DetSimen)  at December 2019
-// кто хочет - может налить какнить, при случае. 
-
-#pragma once
-
-#include <Arduino.h>
+﻿#pragma once
 
 // число цыферок у дисплейчика, в моём 4, бывают на 6 - 8, но у мня нет,я не тестил
 //
@@ -13,26 +8,25 @@ const uint8_t NUM_DIGITS = 4;
 enum class enTM1637Type : bool { Number = false, Time = true };	// перечисление: тип дисплея числа/время
 enum class enTM1637Align: bool {Left = false, Right = true};	// перечисление: выравнивание влево/вправа
 
-#pragma pack(push,1)
 
 class TM1637
 {
 private:
 	static const uint8_t CMD_SET_DATA	= 0x40;  // следом папруть данные
 	static const uint8_t CMD_SET_ADDR	= 0xC0;	 // следом пойдёт адрес
-	static const uint8_t MAGIC_NUM		= 0x88;	 // х.з для чего
+	static const uint8_t MAGIC_NUM		= 0x88;	 // особо не разбиралса, для чего это
 
 protected:
-	uint8_t FClockPin;  // пин для тактов
+	uint8_t FClockPin;  // пин для клока
 	uint8_t FDataPin;	// пин для данных
 
 
-	enTM1637Type FDisplayType : 1;  // тип дисплея, с точками или с двоеточием (для чисел/для времени)
-	bool		FPointVisible : 1;	// видна ли точка/двоеточие при выводе
-	uint8_t		FPointIndex	  : 3;	// позиция точки на экранчике 0..7
-	uint8_t		FBrightness   : 3;	// яркость свечения дисплейчика 0..7
+	enTM1637Type FDisplayType : 1;		// тип дисплея, с точками или с двоеточием (для чисел/для времени)
+	bool		FPointVisible : 1;		// видна ли точка/двоеточие при выводе
+	uint8_t		FPointIndex	  : 3;		// позиция точки на экранчике 0..7
+	uint8_t		FBrightness   : 3;		// яркость свечения дисплейчика 0..7
 
-	uint8_t		FOutData[NUM_DIGITS];  // буфер выводимых данных (уже перекодированный под сегменты)
+	uint8_t		FOutData[NUM_DIGITS];	// буфер выводимых данных (уже перекодированный под сегменты)
 	uint8_t		*FSavedData;			// здесь будут сохраняться данные перед уходом в Sleep	
 
 
@@ -60,6 +54,10 @@ protected:
 // возвращает маску символа, если такой есть, или 0х00, если символа в таблице нетю
 //
 	uint8_t GetSegments(const uint8_t ASymbol) const;
+
+	TM1637() = delete;
+//	TM1637(TM1637&) = delete;
+//	TM1637(TM1637&&) = delete;  // ненужные конструкторы явно удалены
 
 public:
 // канструктор. Принимает 2 пина (обязательно) и тип дисплея (необязательно)
@@ -95,6 +93,8 @@ public:
 // печатается не более NUM_DIGITS начальных цыфр числа, включая знак
 //
 	void Print(const int ANumber, const uint8_t ARadix = 10);
+	void Print(const unsigned ANumber, const uint8_t ARadix = 10);
+
 	void Print(const long ANumber) { Print(int(ANumber), 10); };
 
 
@@ -126,6 +126,8 @@ public:
 //
 	void ShowPoint(const bool APointVisible);
 
+	void ShowPointPos(const uint8_t APointPos, const bool AVisible = true);
+
 // переключает точку. если была включена - выключает и наоборот
 // удобно мигать двоеточием в часах, не надо самому запоминать состояние
 //
@@ -149,4 +151,3 @@ public:
 }
 
 };
-#pragma pack(pop)
