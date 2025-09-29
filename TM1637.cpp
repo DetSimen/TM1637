@@ -1,7 +1,7 @@
-﻿#include <Arduino.h>
-#include "TM1637.h"
+#include <Arduino.h>
 #include <alloca.h>
-#include <avr\pgmspace.h>
+#include <pgmspace.h>
+#include "TM1637.h"
 
 
 #pragma pack(push,1)
@@ -50,6 +50,7 @@ static const T1637SegmentData SegmentsData[]  PROGMEM {
 	{ '-',0x40 }, 
 	{ '*',0x63 },  // значок градуса, т.е пишем -25* выведется -25 и значок градуса
 	{ '_',0x08 },
+	{ '%',0x63+0x08},
 	{ 'r',0x50 },
 	{ 'H',0x76 },
 	{ 'I',0x06 },
@@ -74,17 +75,21 @@ void TM1637::Start(void) const    // выдает старт условие на
 {
 	digitalWrite(FClockPin, HIGH);
 	digitalWrite(FDataPin, HIGH);
+	delayMicroseconds(2);
 	digitalWrite(FDataPin, LOW);
-	digitalWrite(FClockPin, LOW);
+//	digitalWrite(FClockPin, LOW);
 }
 
 
 void TM1637::Stop(void) const // выдает стоп условие на шину
-{
-	digitalWrite(FClockPin, LOW);
-	digitalWrite(FDataPin, LOW);
-	digitalWrite(FClockPin, HIGH);
-	digitalWrite(FDataPin, HIGH);
+{										//		void I2CStop(void) // 1637 Stop 
+	digitalWrite(FClockPin, LOW);		//		clk = 0;
+	delayMicroseconds(2);				//		Delay_us(2);
+	digitalWrite(FDataPin, LOW);		//		dio = 0;
+	delayMicroseconds(2);				//		Delay_us(2);
+	digitalWrite(FClockPin, HIGH);		//		clk = 1;
+	delayMicroseconds(2);				//		Delay_us(2);
+	digitalWrite(FDataPin, HIGH);		//		dio = 1;
 }
 
 
@@ -95,38 +100,62 @@ void TM1637::WriteByte(int8_t wr_data) const {
 	{
 		digitalWrite(FClockPin, LOW);
 		digitalWrite(FDataPin, wr_data & 0x01);// млатшым битом вперёд
-		delayMicroseconds(8);
+		delayMicroseconds(4);
 
 		digitalWrite(FClockPin, HIGH);
-		delayMicroseconds(8);
-
+		delayMicroseconds(4);
 	}
 
-	digitalWrite(FClockPin, LOW);
-	delayMicroseconds(8);
-	digitalWrite(FDataPin, HIGH);
-	delayMicroseconds(8);
-	digitalWrite(FClockPin, HIGH);
-	delayMicroseconds(8);
+	//digitalWrite(FClockPin, LOW);
+	//delayMicroseconds(8);
+	//digitalWrite(FDataPin, HIGH);
+	//delayMicroseconds(8);
+	//digitalWrite(FClockPin, HIGH);
+	//delayMicroseconds(8);
 }
 
+/*
+void SmgDisplay(void) // Write display register
+{
+I2CStart();
+I2CWrByte(0x40); //40H address is automatically incremented by 1 mode, 44H fixed address mode
+I2Cask();
+I2CStop();
 
-void TM1637::Update(void) const {
+I2CStart();
+I2CWrByte(0xc0); // Set the first address
+I2Cask();
+for(uint8_t i=0; i<6; ++i) // Addresses from Canada, do not always write address
+{
+I2CWrByte(0xff); // Send data
+I2Cask();
+}
+I2CStop();
+}
+*/
+
+
+void TM1637::Update(void) {
 	Start();
 	WriteByte(CMD_SET_DATA); // будем передавать данныя, NUM_DIGITS байт + управляющий байт, там где яркость
+	if (!ReadACK()) return;
 	Stop();
 
 	Start();
 	WriteByte(CMD_SET_ADDR);
+	if (!ReadACK()) return;
+
 	for (uint8_t i = 0; i < NUM_DIGITS; i++) {
 		uint8_t bytesend = FOutData[i];
 		if (FPointVisible && (i == FPointIndex)) bytesend |= 0x80; // вывод точки в нужном месте
 		WriteByte(bytesend);		// пишем байты из буфера
+		ReadACK();
 	}
 	Stop();
 
 	Start();
 	WriteByte(MAGIC_NUM + FBrightness);  // пишем яркость
+	ReadACK();
 	Stop();
 }
 
@@ -152,7 +181,6 @@ void TM1637::OutString(const char * AString, const enTM1637Align AAlign) {
 
 	}
 
-
 	Update();
 }
 
@@ -168,6 +196,32 @@ uint8_t TM1637::GetSegments(const uint8_t ASymbol) const {
 	}
 
 	return 0; // не нашли такого символа, отдаем нулевую маску
+}
+
+
+bool TM1637::ReadACK(void)
+{
+	const uint8_t ACK_TIMEOUT_US = 50;
+	bool  timeout = false;
+
+	digitalWrite(FClockPin, LOW);	//		clk = 0;
+	delayMicroseconds(5);			//		Delay_us(5); // After the falling edge of the eighth clock delay 5us,
+									//		ACK signals the beginning of judgment
+	uint32_t now = micros();
+	while (digitalRead(FDataPin) == HIGH) { // while (dio);
+		if (micros() - now > ACK_TIMEOUT_US) {
+			timeout = true;
+			break;
+		}
+	}
+
+	digitalWrite(FClockPin, HIGH);	//		clk = 1;
+	delayMicroseconds(2);			//		Delay_us(2);
+	digitalWrite(FClockPin, LOW);	//		clk = 0;
+
+	if (timeout) Stop();
+
+	return !timeout;
 }
 
 
@@ -207,10 +261,10 @@ void TM1637::Sleep(void)
 void TM1637::Wakeup(void)
 {
 	Init();
-	if (FSavedData != NULL) {
+	if (FSavedData != nullptr) {
 		memcpy(FOutData, FSavedData, NUM_DIGITS);
 		delete[] FSavedData;
-		FSavedData = NULL;
+		FSavedData = nullptr;
 		Update();
 	}
 }
@@ -309,14 +363,16 @@ void TM1637::Clear(void) {
 
 
 void TM1637::SetBrightness(const uint8_t AValue) {
-	FBrightness = AValue & 0x07;
+	FBrightness = AValue & MAX_BRIGHT_MASK;
 	Update();
 }
 
 
 void TM1637::ShowPoint(const bool APointVisible) {
-	FPointVisible = APointVisible;
-	Update();
+	if (FPointVisible != APointVisible) {
+		FPointVisible = APointVisible;
+		Update();
+	}
 }
 
 void TM1637::ShowPointPos(const uint8_t APointPos, const bool AVisible)

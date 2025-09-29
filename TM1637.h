@@ -1,8 +1,8 @@
-﻿#pragma once
+#pragma once
 
 // число цыферок у дисплейчика, в моём 4, бывают на 6 - 8, но у мня нет,я не тестил
 //
-const uint8_t NUM_DIGITS = 4;     
+constexpr uint8_t NUM_DIGITS = 4;     
 
 
 enum class enTM1637Type : bool { Number = false, Time = true };	// перечисление: тип дисплея числа/время
@@ -15,6 +15,8 @@ private:
 	static const uint8_t CMD_SET_DATA	= 0x40;  // следом папруть данные
 	static const uint8_t CMD_SET_ADDR	= 0xC0;	 // следом пойдёт адрес
 	static const uint8_t MAGIC_NUM		= 0x88;	 // особо не разбиралса, для чего это
+
+	static constexpr uint8_t MAX_BRIGHT_MASK = 0x07;
 
 protected:
 	uint8_t FClockPin;  // пин для клока
@@ -40,7 +42,7 @@ protected:
 
 // вывод последовательно всего буфера + установка яркости
 //
-	void Update(void) const;
+	void Update(void);
 
 
 // вывод строки с выравниванием влево/вправо
@@ -56,8 +58,10 @@ protected:
 	uint8_t GetSegments(const uint8_t ASymbol) const;
 
 	TM1637() = delete;
-//	TM1637(TM1637&) = delete;
-//	TM1637(TM1637&&) = delete;  // ненужные конструкторы явно удалены
+	TM1637(TM1637&) = delete;
+	TM1637(TM1637&&) = delete;  // ненужные конструкторы явно удалены
+
+	bool ReadACK(void);               // true - пришол ACK, false - не дождались
 
 public:
 // канструктор. Принимает 2 пина (обязательно) и тип дисплея (необязательно)
