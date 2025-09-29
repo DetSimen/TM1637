@@ -194,7 +194,7 @@ uint8_t TM1637::GetSegments(const uint8_t ASymbol) const {
 
 bool TM1637::ReadACK(void)
 {
-	const uint8_t ACK_TIMEOUT_US = 50;
+	const uint16_t ACK_TIMEOUT_US = 50U;
 	bool  timeout = false;
 
 	digitalWrite(FClockPin, LOW);	//		clk = 0;
