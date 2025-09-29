@@ -105,13 +105,6 @@ void TM1637::WriteByte(int8_t wr_data) const {
 		digitalWrite(FClockPin, HIGH);
 		delayMicroseconds(4);
 	}
-
-	//digitalWrite(FClockPin, LOW);
-	//delayMicroseconds(8);
-	//digitalWrite(FDataPin, HIGH);
-	//delayMicroseconds(8);
-	//digitalWrite(FClockPin, HIGH);
-	//delayMicroseconds(8);
 }
 
 /*
@@ -207,6 +200,7 @@ bool TM1637::ReadACK(void)
 	digitalWrite(FClockPin, LOW);	//		clk = 0;
 	delayMicroseconds(5);			//		Delay_us(5); // After the falling edge of the eighth clock delay 5us,
 									//		ACK signals the beginning of judgment
+	pinMode(FDataPin, INPUT);
 	uint32_t now = micros();
 	while (digitalRead(FDataPin) == HIGH) { // while (dio);
 		if (micros() - now > ACK_TIMEOUT_US) {
@@ -214,6 +208,7 @@ bool TM1637::ReadACK(void)
 			break;
 		}
 	}
+	pinMode(FDataPin, OUTPUT);
 
 	digitalWrite(FClockPin, HIGH);	//		clk = 1;
 	delayMicroseconds(2);			//		Delay_us(2);
