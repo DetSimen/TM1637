@@ -103,8 +103,8 @@ void TM1637::WriteByte(int8_t wr_data) const {
 		bool sendBit = wr_data & 0x01;
 		digitalWrite(FDataPin, sendBit);// млатшым битом вперёд
 		
-		if ((i == 7) && (sendBit)) pinMode(FDataPin, INPUT);
 		delayMicroseconds(4);
+		if ((i == 7) && (sendBit)) pinMode(FDataPin, INPUT);
 
 		digitalWrite(FClockPin, HIGH);
 		delayMicroseconds(4);
